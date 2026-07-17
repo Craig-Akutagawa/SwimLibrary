@@ -1,0 +1,56 @@
+---
+import type { BookEntry } from "../lib/library";
+import { withBase } from "../lib/paths";
+import BookCover from "./BookCover.astro";
+
+interface Props {
+  book: BookEntry;
+  chapterCount: number;
+}
+
+const { book, chapterCount } = Astro.props;
+const href = withBase(`books/${book.data.slug}/`);
+const searchText = [
+  book.data.title,
+  book.data.author,
+  book.data.summary,
+  book.data.category,
+  ...book.data.tags,
+]
+  .join(" ")
+  .toLocaleLowerCase("zh-CN");
+---
+
+<article
+  class="book-card"
+  data-book-card
+  data-book-slug={book.data.slug}
+  data-category={book.data.category}
+  data-search-text={searchText}
+>
+  <a
+    class="book-card__cover-link"
+    href={href}
+    aria-label={`查看《${book.data.title}》`}
+  >
+    <BookCover
+      title={book.data.title}
+      author={book.data.author}
+      label={book.data.coverLabel}
+      accent={book.data.accent}
+    />
+  </a>
+  <p class="book-card__category">{book.data.category}</p>
+  <h3 class="book-card__title">
+    <a href={href}>{book.data.title}</a>
+  </h3>
+  <p class="book-card__meta">
+    <span>{book.data.author}</span>
+    <span>{chapterCount} 章</span>
+  </p>
+  <p class="book-card__summary">{book.data.summary}</p>
+  <div class="book-card__progress" aria-label="阅读进度">
+    <div class="progress-track"><span data-card-progress></span></div>
+    <span class="book-card__progress-value" data-card-progress-value>0%</span>
+  </div>
+</article>

@@ -1,0 +1,281 @@
+---
+import BookCard from "../components/BookCard.astro";
+import BookCover from "../components/BookCover.astro";
+import Icon from "../components/Icon.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  getAllBooks,
+  getChaptersByBookSlug,
+  getFeaturedBook,
+} from "../lib/library";
+import { siteConfig } from "../site.config";
+
+const books = await getAllBooks();
+const featured = (await getFeaturedBook()) ?? books[0];
+const chapterCounts = new Map(
+  await Promise.all(
+    books.map(async (book) => [
+      book.data.slug,
+      (await getChaptersByBookSlug(book.data.slug)).length,
+    ] as const),
+  ),
+);
+const categories = [...new Set(books.map((book) => book.data.category))];
+const visualBooks = [
+  featured,
+  ...books.filter((book) => book.id !== featured?.id),
+].filter(Boolean).slice(0, 3);
+---
+
+<BaseLayout overlayHeader>
+  <main id="main-content">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero__inner">
+        <div class="hero__copy">
+          <p class="eyebrow reveal">Open public library · 2026</p>
+          <h1 class="hero__brand reveal reveal--2" id="hero-title">
+            {siteConfig.name}
+          </h1>
+          <p class="hero__statement reveal reveal--2">
+            把值得重读的文字，放在一处安静的地方。
+          </p>
+          <p class="hero__meta reveal reveal--3">
+            一座轻量、开放的线上藏书馆。无需登录，翻开即读，阅读位置会留在你的浏览器里。
+          </p>
+          <div class="hero__actions reveal reveal--3">
+            <a class="button button--light" href="#library">
+              浏览馆藏
+              <Icon name="arrow-right" size={17} />
+            </a>
+            <a class="button button--ghost" href="#" data-hero-continue hidden>
+              继续阅读
+            </a>
+          </div>
+        </div>
+
+        <div class="hero__visual" aria-hidden="true">
+          {
+            visualBooks[0] && (
+              <div class="hero__book hero__book--main reveal reveal--2">
+                <BookCover
+                  title={visualBooks[0].data.title}
+                  author={visualBooks[0].data.author}
+                  label={visualBooks[0].data.coverLabel}
+                  accent={visualBooks[0].data.accent}
+                  size="large"
+                />
+              </div>
+            )
+          }
+          {
+            visualBooks[1] && (
+              <div class="hero__book hero__book--back reveal reveal--3">
+                <BookCover
+                  title={visualBooks[1].data.title}
+                  author={visualBooks[1].data.author}
+                  label={visualBooks[1].data.coverLabel}
+                  accent={visualBooks[1].data.accent}
+                  size="large"
+                />
+              </div>
+            )
+          }
+          {
+            visualBooks[2] && (
+              <div class="hero__book hero__book--low reveal reveal--3">
+                <BookCover
+                  title={visualBooks[2].data.title}
+                  author={visualBooks[2].data.author}
+                  label={visualBooks[2].data.coverLabel}
+                  accent={visualBooks[2].data.accent}
+                  size="large"
+                />
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="section--tight" data-continue-section hidden>
+      <div class="shell">
+        <div class="continue-reading" data-continue-card>
+          <div class="continue-reading__book">
+            <span class="continue-reading__mark" aria-hidden="true">续</span>
+            <div>
+              <p class="eyebrow">Continue reading</p>
+              <h3 data-continue-title>继续阅读</h3>
+              <p data-continue-meta></p>
+              <div class="progress-track" aria-hidden="true">
+                <span data-continue-progress></span>
+              </div>
+            </div>
+          </div>
+          <a class="button" href="#" data-continue-link>
+            回到上次位置
+            <Icon name="arrow-right" size={17} />
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="library" aria-labelledby="library-title">
+      <div class="shell">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">The collection</p>
+            <h2 class="section-heading__title" id="library-title">全部馆藏</h2>
+          </div>
+          <p class="section-heading__copy">
+            当前收录 {books.length} 本示例书籍。首版使用标题、作者与标签进行轻量搜索，真实内容接入后可直接替换。
+          </p>
+        </div>
+
+        <div class="library-tools">
+          <label class="search-field" for="library-search">
+            <Icon name="search" size={19} />
+            <input
+              id="library-search"
+              type="search"
+              placeholder="搜索书名、作者或标签"
+              autocomplete="off"
+              data-library-search
+            />
+          </label>
+
+          <div class="filter-row" aria-label="馆藏筛选">
+            <button class="filter-button" type="button" data-filter="all" aria-pressed="true">
+              全部
+            </button>
+            {
+              categories.map((category) => (
+                <button
+                  class="filter-button"
+                  type="button"
+                  data-filter={category}
+                  aria-pressed="false"
+                >
+                  {category}
+                </button>
+              ))
+            }
+            <button class="filter-button" type="button" data-filter="favorites" aria-pressed="false">
+              已收藏
+            </button>
+          </div>
+        </div>
+
+        <p class="library-results" aria-live="polite" data-result-count>
+          显示 {books.length} 本
+        </p>
+
+        <div class="book-grid" data-book-grid>
+          {
+            books.map((book) => (
+              <BookCard
+                book={book}
+                chapterCount={chapterCounts.get(book.data.slug) ?? 0}
+              />
+            ))
+          }
+        </div>
+
+        <div class="library-empty" data-library-empty>
+          没有找到相符的书。换一个关键词，或查看全部馆藏。
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--bordered">
+      <div class="shell statement">
+        <div class="statement__mark" aria-hidden="true">读</div>
+        <p class="statement__copy">
+          书架负责让人发现，详情页负责让人了解，阅读器则应当<em>安静地退到文字之后</em>。这里不追求喧闹的功能，只留下真正帮助阅读的部分。
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script is:inline define:vars={{ baseUrl: import.meta.env.BASE_URL }}>
+    (() => {
+      const progressKey = "shiyue-progress";
+      const favoritesKey = "shiyue-favorites";
+      const cards = Array.from(document.querySelectorAll("[data-book-card]"));
+      const search = document.querySelector("[data-library-search]");
+      const empty = document.querySelector("[data-library-empty]");
+      const resultCount = document.querySelector("[data-result-count]");
+      const filters = Array.from(document.querySelectorAll("[data-filter]"));
+      let activeFilter = "all";
+
+      const readJson = (key, fallback) => {
+        try {
+          return JSON.parse(localStorage.getItem(key) || "") || fallback;
+        } catch {
+          return fallback;
+        }
+      };
+
+      const progress = readJson(progressKey, {});
+      const favorites = new Set(readJson(favoritesKey, []));
+      const latest = Object.values(progress)
+        .filter((item) => item && item.href)
+        .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+
+      if (latest) {
+        document.querySelector("[data-continue-section]").hidden = false;
+        const card = document.querySelector("[data-continue-card]");
+        const heroLink = document.querySelector("[data-hero-continue]");
+        const href = baseUrl + String(latest.href).replace(/^\/+/, "");
+        card.dataset.visible = "true";
+        card.querySelector("[data-continue-title]").textContent = latest.bookTitle;
+        card.querySelector("[data-continue-meta]").textContent =
+          latest.chapterTitle + " · 已读 " + Math.round(latest.progress || 0) + "%";
+        card.querySelector("[data-continue-progress]").style.setProperty(
+          "--progress",
+          (latest.progress || 0) + "%",
+        );
+        card.querySelector("[data-continue-link]").href = href;
+        heroLink.href = href;
+        heroLink.hidden = false;
+      }
+
+      cards.forEach((card) => {
+        const item = progress[card.dataset.bookSlug];
+        if (!item) return;
+        const value = Math.round(item.progress || 0);
+        card.dataset.hasProgress = "true";
+        card.querySelector("[data-card-progress]").style.setProperty("--progress", value + "%");
+        card.querySelector("[data-card-progress-value]").textContent = value + "%";
+      });
+
+      const applyFilters = () => {
+        const query = (search.value || "").trim().toLocaleLowerCase("zh-CN");
+        let visible = 0;
+
+        cards.forEach((card) => {
+          const matchesQuery = !query || card.dataset.searchText.includes(query);
+          const matchesFilter =
+            activeFilter === "all" ||
+            (activeFilter === "favorites" && favorites.has(card.dataset.bookSlug)) ||
+            card.dataset.category === activeFilter;
+          card.hidden = !(matchesQuery && matchesFilter);
+          if (!card.hidden) visible += 1;
+        });
+
+        resultCount.textContent = "显示 " + visible + " 本";
+        empty.dataset.visible = String(visible === 0);
+      };
+
+      search.addEventListener("input", applyFilters);
+      filters.forEach((button) => {
+        button.addEventListener("click", () => {
+          activeFilter = button.dataset.filter;
+          filters.forEach((item) =>
+            item.setAttribute("aria-pressed", String(item === button)),
+          );
+          applyFilters();
+        });
+      });
+    })();
+  </script>
+</BaseLayout>

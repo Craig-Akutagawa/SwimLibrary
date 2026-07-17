@@ -1,0 +1,429 @@
+---
+import { render } from "astro:content";
+import Icon from "../../../components/Icon.astro";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import {
+  getAllBooks,
+  getChapterSlug,
+  getChaptersByBookSlug,
+  type BookEntry,
+  type ChapterEntry,
+} from "../../../lib/library";
+import { withBase } from "../../../lib/paths";
+
+interface Props {
+  book: BookEntry;
+  chapter: ChapterEntry;
+  chapters: ChapterEntry[];
+  previous?: ChapterEntry;
+  next?: ChapterEntry;
+  chapterIndex: number;
+}
+
+export async function getStaticPaths() {
+  const books = await getAllBooks();
+  const nested = await Promise.all(
+    books.map(async (book) => {
+      const chapters = await getChaptersByBookSlug(book.data.slug);
+      return chapters.map((chapter, chapterIndex) => ({
+        params: {
+          book: book.data.slug,
+          chapter: getChapterSlug(chapter),
+        },
+        props: {
+          book,
+          chapter,
+          chapters,
+          previous: chapters[chapterIndex - 1],
+          next: chapters[chapterIndex + 1],
+          chapterIndex,
+        },
+      }));
+    }),
+  );
+
+  return nested.flat();
+}
+
+const {
+  book,
+  chapter,
+  chapters,
+  previous,
+  next,
+  chapterIndex,
+} = Astro.props;
+const { Content } = await render(chapter);
+const chapterSlug = getChapterSlug(chapter);
+const bookHref = withBase(`books/${book.data.slug}/`);
+const chapterHref = (entry: ChapterEntry) =>
+  withBase(`read/${book.data.slug}/${getChapterSlug(entry)}/`);
+---
+
+<BaseLayout
+  title={`${chapter.data.title} — ${book.data.title}`}
+  description={chapter.data.excerpt ?? book.data.summary}
+  hideChrome
+  bodyClass="reader-body"
+>
+  <div class="reader-progress" aria-hidden="true">
+    <span data-reader-progress></span>
+  </div>
+
+  <header class="reader-header" data-reader-header>
+    <div class="reader-header__inner">
+      <a class="reader-header__book" href={bookHref}>
+        <Icon name="chevron-left" size={17} />
+        <span>{book.data.title}</span>
+      </a>
+      <span class="reader-header__chapter">{chapter.data.title}</span>
+      <div class="reader-header__actions">
+        <button
+          class="icon-button mobile-toc-button"
+          type="button"
+          data-dialog-open="toc-dialog"
+          aria-label="打开章节目录"
+        >
+          <Icon name="menu" size={19} />
+        </button>
+        <button
+          class="icon-button"
+          type="button"
+          data-dialog-open="settings-dialog"
+          aria-label="打开阅读设置"
+        >
+          <Icon name="settings" size={19} />
+        </button>
+        <button class="icon-button" type="button" data-theme-toggle aria-label="切换明暗主题">
+          <span class="theme-icon--moon"><Icon name="moon" size={18} /></span>
+          <span class="theme-icon--sun"><Icon name="sun" size={18} /></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main
+    id="main-content"
+    class="reader-shell"
+    data-reader-shell
+    data-book-slug={book.data.slug}
+    data-chapter-slug={chapterSlug}
+    data-chapter-index={chapterIndex}
+    data-chapter-count={chapters.length}
+  >
+    <aside class="reader-toc" aria-label="章节目录">
+      <a class="reader-toc__back" href={bookHref}>
+        <Icon name="chevron-left" size={15} />
+        返回书籍详情
+      </a>
+      <h2>{book.data.title}</h2>
+      <ol>
+        {
+          chapters.map((entry) => (
+            <li>
+              <a
+                href={chapterHref(entry)}
+                aria-current={entry.id === chapter.id ? "page" : undefined}
+              >
+                {entry.data.title}
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </aside>
+
+    <div class="reader-main">
+      <article class="reader-article" data-reader-article>
+        <p class="reader-article__kicker">
+          第 {String(chapterIndex + 1).padStart(2, "0")} 章 · {book.data.title}
+        </p>
+        <h1>{chapter.data.title}</h1>
+        <div class="reader-prose">
+          <Content />
+        </div>
+      </article>
+
+      <nav class="reader-navigation" aria-label="章节导航">
+        {
+          previous ? (
+            <a class="reader-nav-link" href={chapterHref(previous)} data-previous-chapter>
+              <Icon name="chevron-left" size={19} />
+              <span>
+                上一章
+                <strong>{previous.data.title}</strong>
+              </span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          next ? (
+            <a
+              class="reader-nav-link reader-nav-link--next"
+              href={chapterHref(next)}
+              data-next-chapter
+            >
+              <span>
+                下一章
+                <strong>{next.data.title}</strong>
+              </span>
+              <Icon name="chevron-right" size={19} />
+            </a>
+          ) : (
+            <a class="reader-nav-link reader-nav-link--next" href={bookHref}>
+              <span>
+                本书读完
+                <strong>返回书籍详情</strong>
+              </span>
+              <Icon name="chevron-right" size={19} />
+            </a>
+          )
+        }
+      </nav>
+    </div>
+  </main>
+
+  <dialog class="reader-dialog" id="settings-dialog" aria-labelledby="settings-dialog-title">
+    <div class="reader-dialog__header">
+      <h2 id="settings-dialog-title">阅读设置</h2>
+      <button class="icon-button" type="button" data-dialog-close aria-label="关闭阅读设置">
+        <Icon name="close" size={19} />
+      </button>
+    </div>
+    <div class="reader-dialog__body">
+      <label class="range-control">
+        <span class="range-control__label">
+          <span>字号</span>
+          <output data-font-size-output>19 px</output>
+        </span>
+        <input data-reader-font-size type="range" min="16" max="24" step="1" value="19" />
+      </label>
+
+      <label class="range-control">
+        <span class="range-control__label">
+          <span>行高</span>
+          <output data-line-height-output>1.85</output>
+        </span>
+        <input data-reader-line-height type="range" min="1.5" max="2.2" step="0.05" value="1.85" />
+      </label>
+
+      <label class="range-control">
+        <span class="range-control__label">
+          <span>栏宽</span>
+          <output data-reader-width-output>70 字符</output>
+        </span>
+        <input data-reader-width type="range" min="48" max="82" step="2" value="70" />
+      </label>
+
+      <div>
+        <span class="range-control__label">页面主题</span>
+        <div class="theme-choice">
+          <button type="button" data-theme-choice="light" aria-pressed="false">暖纸</button>
+          <button type="button" data-theme-choice="dark" aria-pressed="false">夜读</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="reader-dialog" id="toc-dialog" aria-labelledby="toc-dialog-title">
+    <div class="reader-dialog__header">
+      <h2 id="toc-dialog-title">章节目录</h2>
+      <button class="icon-button" type="button" data-dialog-close aria-label="关闭章节目录">
+        <Icon name="close" size={19} />
+      </button>
+    </div>
+    <div class="reader-dialog__body">
+      <nav class="reader-dialog-toc" aria-label="移动端章节目录">
+        {
+          chapters.map((entry) => (
+            <a
+              href={chapterHref(entry)}
+              aria-current={entry.id === chapter.id ? "page" : undefined}
+            >
+              <span>{String(entry.data.order).padStart(2, "0")}</span>
+              {entry.data.title}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+  </dialog>
+
+  <script
+    is:inline
+    define:vars={{
+      baseUrl: import.meta.env.BASE_URL,
+      bookSlug: book.data.slug,
+      bookTitle: book.data.title,
+      chapterSlug,
+      chapterTitle: chapter.data.title,
+      chapterIndex,
+      chapterCount: chapters.length,
+    }}
+  >
+    (() => {
+      const progressKey = "shiyue-progress";
+      const settingsKey = "shiyue-reader-settings";
+      const shell = document.querySelector("[data-reader-shell]");
+      const article = document.querySelector("[data-reader-article]");
+      const header = document.querySelector("[data-reader-header]");
+      const progressBar = document.querySelector("[data-reader-progress]");
+      const fontInput = document.querySelector("[data-reader-font-size]");
+      const lineInput = document.querySelector("[data-reader-line-height]");
+      const widthInput = document.querySelector("[data-reader-width]");
+      let lastScroll = window.scrollY;
+      let ticking = false;
+
+      const readJson = (key, fallback) => {
+        try {
+          return JSON.parse(localStorage.getItem(key) || "") || fallback;
+        } catch {
+          return fallback;
+        }
+      };
+
+      const settings = {
+        fontSize: 19,
+        lineHeight: 1.85,
+        width: 70,
+        ...readJson(settingsKey, {}),
+      };
+
+      const applySettings = () => {
+        shell.style.setProperty("--reader-font-size", settings.fontSize + "px");
+        shell.style.setProperty("--reader-line-height", String(settings.lineHeight));
+        shell.style.setProperty("--reader-width", settings.width + "ch");
+        fontInput.value = settings.fontSize;
+        lineInput.value = settings.lineHeight;
+        widthInput.value = settings.width;
+        document.querySelector("[data-font-size-output]").textContent =
+          settings.fontSize + " px";
+        document.querySelector("[data-line-height-output]").textContent =
+          Number(settings.lineHeight).toFixed(2);
+        document.querySelector("[data-reader-width-output]").textContent =
+          settings.width + " 字符";
+      };
+
+      const saveSettings = () => {
+        try {
+          localStorage.setItem(settingsKey, JSON.stringify(settings));
+        } catch {}
+      };
+
+      fontInput.addEventListener("input", () => {
+        settings.fontSize = Number(fontInput.value);
+        applySettings();
+        saveSettings();
+      });
+
+      lineInput.addEventListener("input", () => {
+        settings.lineHeight = Number(lineInput.value);
+        applySettings();
+        saveSettings();
+      });
+
+      widthInput.addEventListener("input", () => {
+        settings.width = Number(widthInput.value);
+        applySettings();
+        saveSettings();
+      });
+
+      document.querySelectorAll("[data-dialog-open]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.getElementById(button.dataset.dialogOpen)?.showModal();
+        });
+      });
+
+      document.querySelectorAll("[data-dialog-close]").forEach((button) => {
+        button.addEventListener("click", () => button.closest("dialog")?.close());
+      });
+
+      const saveProgress = (chapterProgress, overallProgress) => {
+        const allProgress = readJson(progressKey, {});
+        allProgress[bookSlug] = {
+          bookTitle,
+          chapterTitle,
+          chapter: chapterSlug,
+          progress: overallProgress,
+          chapterProgress,
+          href: "read/" + bookSlug + "/" + chapterSlug + "/",
+          updatedAt: Date.now(),
+        };
+        try {
+          localStorage.setItem(progressKey, JSON.stringify(allProgress));
+        } catch {}
+      };
+
+      const updateReadingState = () => {
+        const articleTop = article.offsetTop;
+        const readable = Math.max(1, article.offsetHeight - window.innerHeight * 0.72);
+        const chapterProgress = Math.max(
+          0,
+          Math.min(100, ((window.scrollY - articleTop) / readable) * 100),
+        );
+        const overallProgress =
+          ((chapterIndex + chapterProgress / 100) / chapterCount) * 100;
+        progressBar.style.setProperty("--reading-progress", chapterProgress + "%");
+        header.dataset.scrolled = String(window.scrollY > 30);
+        header.dataset.hidden = String(
+          window.scrollY > 180 && window.scrollY > lastScroll + 4,
+        );
+        lastScroll = window.scrollY;
+        saveProgress(chapterProgress, overallProgress);
+        ticking = false;
+      };
+
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (!ticking) {
+            requestAnimationFrame(updateReadingState);
+            ticking = true;
+          }
+        },
+        { passive: true },
+      );
+
+      document.addEventListener("keydown", (event) => {
+        if (
+          event.altKey ||
+          event.ctrlKey ||
+          event.metaKey ||
+          document.querySelector("dialog[open]") ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)
+        ) {
+          return;
+        }
+        if (event.key === "ArrowLeft") {
+          document.querySelector("[data-previous-chapter]")?.click();
+        }
+        if (event.key === "ArrowRight") {
+          document.querySelector("[data-next-chapter]")?.click();
+        }
+      });
+
+      applySettings();
+
+      const saved = readJson(progressKey, {})[bookSlug];
+      if (
+        saved?.chapter === chapterSlug &&
+        saved.chapterProgress > 2 &&
+        !window.location.hash
+      ) {
+        requestAnimationFrame(() => {
+          const articleTop = article.offsetTop;
+          const readable = Math.max(1, article.offsetHeight - window.innerHeight * 0.72);
+          window.scrollTo({
+            top: articleTop + readable * (saved.chapterProgress / 100),
+            behavior: "auto",
+          });
+          updateReadingState();
+        });
+      } else {
+        updateReadingState();
+      }
+    })();
+  </script>
+</BaseLayout>

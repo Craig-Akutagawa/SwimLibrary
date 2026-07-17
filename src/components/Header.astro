@@ -1,0 +1,33 @@
+---
+import Icon from "./Icon.astro";
+import { withBase } from "../lib/paths";
+import { siteConfig } from "../site.config";
+
+interface Props {
+  overlay?: boolean;
+}
+
+const { overlay = false } = Astro.props;
+---
+
+<header class:list={["site-header", { "site-header--overlay": overlay }]}>
+  <div class="site-header__inner">
+    <a class="brand" href={withBase()} aria-label={`${siteConfig.name}首页`}>
+      <span class="brand__mark" aria-hidden="true">拾</span>
+      <span>{siteConfig.name}</span>
+    </a>
+
+    <nav class="site-nav" aria-label="主导航">
+      <a class="site-nav__link" href={withBase("#library")}>馆藏</a>
+      <a class="site-nav__link" href={withBase("about/")}>关于</a>
+      <a class="icon-button" href={withBase("#library-search")} aria-label="搜索馆藏">
+        <Icon name="search" size={19} />
+      </a>
+      <button class="icon-button" type="button" data-theme-toggle aria-label="切换明暗主题">
+        <span class="theme-icon--moon"><Icon name="moon" size={19} /></span>
+        <span class="theme-icon--sun"><Icon name="sun" size={19} /></span>
+      </button>
+    </nav>
+  </div>
+</header>
+

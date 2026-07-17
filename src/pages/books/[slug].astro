@@ -1,0 +1,174 @@
+---
+import BookCover from "../../components/BookCover.astro";
+import Icon from "../../components/Icon.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  getAllBooks,
+  getChapterSlug,
+  getChaptersByBookSlug,
+  type BookEntry,
+  type ChapterEntry,
+} from "../../lib/library";
+import { withBase } from "../../lib/paths";
+
+interface Props {
+  book: BookEntry;
+  chapters: ChapterEntry[];
+}
+
+export async function getStaticPaths() {
+  const books = await getAllBooks();
+
+  return Promise.all(
+    books.map(async (book) => ({
+      params: { slug: book.data.slug },
+      props: {
+        book,
+        chapters: await getChaptersByBookSlug(book.data.slug),
+      },
+    })),
+  );
+}
+
+const { book, chapters } = Astro.props;
+const firstChapter = chapters[0];
+const firstChapterHref = firstChapter
+  ? withBase(`read/${book.data.slug}/${getChapterSlug(firstChapter)}/`)
+  : withBase();
+const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+}).format(book.data.updated);
+---
+
+<BaseLayout title={book.data.title} description={book.data.summary}>
+  <main id="main-content">
+    <div class="shell book-detail">
+      <div class="book-detail__cover reveal">
+        <BookCover
+          title={book.data.title}
+          author={book.data.author}
+          label={book.data.coverLabel}
+          accent={book.data.accent}
+          size="large"
+        />
+      </div>
+
+      <article class="book-detail__content">
+        <p class="book-detail__category reveal">{book.data.category}</p>
+        <h1 class="reveal reveal--2">{book.data.title}</h1>
+        <p class="book-detail__author reveal reveal--2">{book.data.author}</p>
+        <p class="book-detail__summary reveal reveal--3">{book.data.summary}</p>
+
+        <div class="book-detail__actions reveal reveal--3">
+          <a
+            class="button"
+            href={firstChapterHref}
+            data-primary-read
+            data-book-slug={book.data.slug}
+          >
+            <Icon name="book-open" size={18} />
+            <span data-primary-read-label>开始阅读</span>
+          </a>
+          <button
+            class="button button--ghost favorite-button"
+            type="button"
+            data-favorite-button
+            data-book-slug={book.data.slug}
+            aria-pressed="false"
+          >
+            <Icon name="bookmark" size={17} />
+            <span data-favorite-label>收藏本书</span>
+          </button>
+        </div>
+
+        <dl class="book-detail__facts">
+          <div>
+            <dt>章节</dt>
+            <dd>{chapters.length} 章</dd>
+          </div>
+          <div>
+            <dt>最近整理</dt>
+            <dd>{updatedLabel}</dd>
+          </div>
+          <div>
+            <dt>公开许可</dt>
+            <dd>{book.data.rights}</dd>
+          </div>
+        </dl>
+
+        <section class="chapter-list" aria-labelledby="chapter-list-title">
+          <h2 id="chapter-list-title">目录</h2>
+          <ol>
+            {
+              chapters.map((chapter) => (
+                <li>
+                  <a
+                    class="chapter-link"
+                    href={withBase(
+                      `read/${book.data.slug}/${getChapterSlug(chapter)}/`,
+                    )}
+                  >
+                    <span class="chapter-link__title">{chapter.data.title}</span>
+                    <span class="chapter-link__excerpt">
+                      {chapter.data.excerpt ?? "阅读本章"}
+                    </span>
+                    <Icon name="chevron-right" size={17} />
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <script is:inline define:vars={{ baseUrl: import.meta.env.BASE_URL }}>
+    (() => {
+      const progressKey = "shiyue-progress";
+      const favoritesKey = "shiyue-favorites";
+      const readJson = (key, fallback) => {
+        try {
+          return JSON.parse(localStorage.getItem(key) || "") || fallback;
+        } catch {
+          return fallback;
+        }
+      };
+
+      const readButton = document.querySelector("[data-primary-read]");
+      const slug = readButton.dataset.bookSlug;
+      const progress = readJson(progressKey, {});
+      const saved = progress[slug];
+
+      if (saved?.href) {
+        readButton.href = baseUrl + String(saved.href).replace(/^\/+/, "");
+        readButton.querySelector("[data-primary-read-label]").textContent =
+          "继续阅读 · " + saved.chapterTitle;
+      }
+
+      const favoriteButton = document.querySelector("[data-favorite-button]");
+      const favorites = new Set(readJson(favoritesKey, []));
+      const renderFavorite = () => {
+        const active = favorites.has(slug);
+        favoriteButton.dataset.favorited = String(active);
+        favoriteButton.setAttribute("aria-pressed", String(active));
+        favoriteButton.querySelector("[data-favorite-label]").textContent =
+          active ? "已收藏" : "收藏本书";
+      };
+
+      favoriteButton.addEventListener("click", () => {
+        if (favorites.has(slug)) favorites.delete(slug);
+        else favorites.add(slug);
+        try {
+          localStorage.setItem(favoritesKey, JSON.stringify(Array.from(favorites)));
+        } catch {}
+        renderFavorite();
+      });
+
+      renderFavorite();
+    })();
+  </script>
+</BaseLayout>
+
