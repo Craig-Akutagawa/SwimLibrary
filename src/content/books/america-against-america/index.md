@@ -1,0 +1,21 @@
+---
+title: 美国反对美国
+slug: america-against-america
+author: 王沪宁
+summary: 以1988年赴美访学期间的观察为基础，从土地、政治、社会调节、制度再生产与危机潜流等层面，分析美国社会内部相互冲突的力量。
+category: 政治观察
+tags:
+  - 美国
+  - 政治学
+  - 社会观察
+published: 1991-01-01
+updated: 2026-07-18
+featured: true
+accent: "#7A332C"
+coverLabel: 美国 · 观察
+rights: 文本整理自 zealotCE/America-Against-America，著作权归原作者及相关权利人
+---
+
+作者在六个月的美国学术访问中走访城市、大学、政府部门与社会组织，以历史、社会和文化条件为框架记录美国政治与社会管理的实际运行。
+
+本站版本按原书结构整理为序及十一章，保留各章内部的小节层级，便于在线连续阅读。
