@@ -1298,15 +1298,10 @@ svg {
 .reader-prose p {
   margin: 1.25em 0;
   text-align: justify;
+  text-indent: 2em;
   text-wrap: pretty;
 }
 
-.reader-prose p + p {
-  text-indent: 2em;
-}
-
-.reader-prose h2 + p,
-.reader-prose h3 + p,
 .reader-prose blockquote p,
 .reader-prose li p {
   text-indent: 0;
