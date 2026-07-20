@@ -9,6 +9,7 @@ interface Props {
   description?: string;
   overlayHeader?: boolean;
   hideChrome?: boolean;
+  hideFooter?: boolean;
   bodyClass?: string;
 }
 
@@ -17,6 +18,7 @@ const {
   description = siteConfig.description,
   overlayHeader = false,
   hideChrome = false,
+  hideFooter = false,
   bodyClass = "",
 } = Astro.props;
 
@@ -57,7 +59,7 @@ const canonical = Astro.site
     <a class="skip-link" href="#main-content">跳到正文</a>
     {!hideChrome && <Header overlay={overlayHeader} />}
     <slot />
-    {!hideChrome && <Footer />}
+    {!hideChrome && !hideFooter && <Footer />}
 
     <script is:inline>
       (() => {

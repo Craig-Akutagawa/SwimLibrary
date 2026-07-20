@@ -895,30 +895,6 @@ svg {
   font-style: normal;
 }
 
-.about-notes {
-  display: grid;
-  margin-top: 58px;
-  padding-top: 34px;
-  border-top: 1px solid var(--line);
-  gap: 10px;
-}
-
-.about-notes h2 {
-  margin: 28px 0 0;
-  font-family: var(--font-serif);
-  font-size: 21px;
-}
-
-.about-notes h2:first-child {
-  margin-top: 0;
-}
-
-.about-notes p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.8;
-}
-
 .site-footer {
   padding-block: 36px;
   border-top: 1px solid var(--line);
