@@ -97,31 +97,31 @@ const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
             <dd>{updatedLabel}</dd>
           </div>
         </dl>
-
-        <section class="chapter-list" aria-labelledby="chapter-list-title">
-          <h2 id="chapter-list-title">目录</h2>
-          <ol>
-            {
-              chapters.map((chapter) => (
-                <li>
-                  <a
-                    class="chapter-link"
-                    href={withBase(
-                      `read/${book.data.slug}/${getChapterSlug(chapter)}/`,
-                    )}
-                  >
-                    <span class="chapter-link__title">{chapter.data.title}</span>
-                    <span class="chapter-link__excerpt">
-                      {chapter.data.excerpt ?? "阅读本章"}
-                    </span>
-                    <Icon name="chevron-right" size={17} />
-                  </a>
-                </li>
-              ))
-            }
-          </ol>
-        </section>
       </article>
+
+      <section class="chapter-list" aria-labelledby="chapter-list-title">
+        <h2 id="chapter-list-title">目录</h2>
+        <ol>
+          {
+            chapters.map((chapter) => (
+              <li>
+                <a
+                  class="chapter-link"
+                  href={withBase(
+                    `read/${book.data.slug}/${getChapterSlug(chapter)}/`,
+                  )}
+                >
+                  <span class="chapter-link__title">{chapter.data.title}</span>
+                  <span class="chapter-link__excerpt">
+                    {chapter.data.excerpt ?? "阅读本章"}
+                  </span>
+                  <Icon name="chevron-right" size={17} />
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
     </div>
   </main>
 
