@@ -3,12 +3,18 @@ import { Image } from "astro:assets";
 import swimCover from "../assets/images/swim-cover.png";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-// Placeholder copy: replace these three lines with the final lyrics later.
 const lyricLines = [
-  { text: "青い夜を泳いで", active: false },
-  { text: "明日へ泳いで", active: true },
-  { text: "この声が届くまで", active: false },
+  { text: "何億通り 奪い合って ひかり射した", active: false },
+  { text: "何億光年 今日に向かって放浪を", active: true },
+  { text: "何億通り 奪い合って ひかり射した", active: false },
+  { text: "悩んでる 君の好きな方へ 泳いで", active: false },
 ];
+
+const initialLyricIndex = Math.max(
+  0,
+  lyricLines.findIndex((line) => line.active),
+);
+const initialLyricId = `swim-lyric-${initialLyricIndex + 1}`;
 ---
 
 <BaseLayout
@@ -44,48 +50,212 @@ const lyricLines = [
               src={swimCover}
               alt="《Swim》翻唱封面，五位角色站在蓝天与白云前"
               widths={[640, 960, 1280, 1600]}
-              sizes="(max-width: 900px) calc(100vw - 40px), min(58vw, 980px)"
+              sizes="(max-width: 1100px) calc(100vw - 40px), min(52vw, 920px)"
               format="webp"
               quality={86}
               priority
             />
           </div>
-          <figcaption class="swim-cover__caption">
-            <span class="swim-cover__title">Swim</span>
-            <span>MyGO!!!!! cover</span>
-          </figcaption>
+          <figcaption class="swim-cover__caption">SWIM(MyGO!!!!! ver)</figcaption>
         </figure>
 
-        <div class="swim-lyrics">
-          <p class="swim-lyrics__label">
-            <span aria-hidden="true"></span>
-            About / selected lyrics
-          </p>
-
-          <blockquote
-            class="swim-lyrics__lines"
-            lang="ja"
-            aria-label="日文歌词节选，占位文本"
+        <div class="swim-lyrics" data-lyrics>
+          <div
+            class="swim-lyrics__viewport"
+            role="region"
+            aria-label="日文歌词，可上下滚动"
+            aria-activedescendant={initialLyricId}
+            tabindex="0"
+            data-lyrics-viewport
           >
-            {
-              lyricLines.map((line, index) => (
-                <p
-                  class:list={[
-                    "swim-lyrics__line",
-                    { "swim-lyrics__line--active": line.active },
-                  ]}
-                  style={`--line-delay: ${260 + index * 110}ms`}
-                >
-                  {line.text}
-                </p>
-              ))
-            }
-          </blockquote>
+            <blockquote class="swim-lyrics__quote" lang="ja">
+              <ol class="swim-lyrics__track" data-lyrics-track>
+                {
+                  lyricLines.map((line, index) => (
+                    <li
+                      class:list={[
+                        "swim-lyrics__item",
+                        { "is-active": line.active },
+                      ]}
+                      data-lyric-item
+                      data-initial-active={line.active ? "true" : undefined}
+                    >
+                      <button
+                        id={`swim-lyric-${index + 1}`}
+                        class="swim-lyrics__line"
+                        type="button"
+                        aria-current={line.active ? "true" : undefined}
+                        tabindex="-1"
+                        data-lyric-line
+                      >
+                        {line.text}
+                      </button>
+                    </li>
+                  ))
+                }
+              </ol>
+            </blockquote>
+          </div>
         </div>
       </div>
     </section>
   </main>
 </BaseLayout>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-lyrics]").forEach((root) => {
+    if (root.dataset.lyricsReady === "true") return;
+    root.dataset.lyricsReady = "true";
+
+    const viewport = root.querySelector<HTMLElement>("[data-lyrics-viewport]");
+    const track = root.querySelector<HTMLElement>("[data-lyrics-track]");
+    const items = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-lyric-item]"),
+    );
+
+    if (!viewport || !track || items.length === 0) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const initialItem =
+      items.find((item) => item.dataset.initialActive === "true") ?? items[0];
+    let activeItem = initialItem;
+    let lyricsInitialized = false;
+    let scrollFrame = 0;
+    let resizeFrame = 0;
+
+    const updateTrackPadding = () => {
+      const firstItem = items[0];
+      const lastItem = items.at(-1);
+      if (!firstItem || !lastItem) return;
+
+      track.style.setProperty(
+        "--lyrics-padding-start",
+        `${Math.max(0, (viewport.clientHeight - firstItem.offsetHeight) / 2)}px`,
+      );
+      track.style.setProperty(
+        "--lyrics-padding-end",
+        `${Math.max(0, (viewport.clientHeight - lastItem.offsetHeight) / 2)}px`,
+      );
+    };
+
+    const setActiveItem = (nextItem: HTMLElement) => {
+      activeItem = nextItem;
+
+      items.forEach((item) => {
+        const isActive = item === nextItem;
+        const line = item.querySelector<HTMLButtonElement>("[data-lyric-line]");
+        item.classList.toggle("is-active", isActive);
+
+        if (!line) return;
+        if (isActive) {
+          line.setAttribute("aria-current", "true");
+          viewport.setAttribute("aria-activedescendant", line.id);
+        } else {
+          line.removeAttribute("aria-current");
+        }
+      });
+    };
+
+    const findCenteredItem = () => {
+      const viewportRect = viewport.getBoundingClientRect();
+      const viewportCenter = viewportRect.top + viewportRect.height / 2;
+
+      return items.reduce((nearest, item) => {
+        const itemRect = item.getBoundingClientRect();
+        const nearestRect = nearest.getBoundingClientRect();
+        const itemDistance = Math.abs(
+          itemRect.top + itemRect.height / 2 - viewportCenter,
+        );
+        const nearestDistance = Math.abs(
+          nearestRect.top + nearestRect.height / 2 - viewportCenter,
+        );
+        return itemDistance < nearestDistance ? item : nearest;
+      }, items[0]);
+    };
+
+    const syncActiveItem = () => {
+      scrollFrame = 0;
+      setActiveItem(findCenteredItem());
+    };
+
+    const centerItem = (
+      item: HTMLElement,
+      behavior: ScrollBehavior = reducedMotion.matches ? "auto" : "smooth",
+    ) => {
+      const viewportRect = viewport.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      const top =
+        viewport.scrollTop +
+        itemRect.top -
+        viewportRect.top -
+        (viewport.clientHeight - itemRect.height) / 2;
+
+      viewport.scrollTo({ top, behavior });
+    };
+
+    viewport.addEventListener(
+      "scroll",
+      () => {
+        if (!lyricsInitialized || scrollFrame) return;
+        scrollFrame = window.requestAnimationFrame(syncActiveItem);
+      },
+      { passive: true },
+    );
+
+    items.forEach((item) => {
+      item
+        .querySelector<HTMLButtonElement>("[data-lyric-line]")
+        ?.addEventListener("click", () => {
+          setActiveItem(item);
+          centerItem(item);
+          viewport.focus({ preventScroll: true });
+        });
+    });
+
+    viewport.addEventListener("keydown", (event) => {
+      const handledKeys = ["ArrowDown", "ArrowUp", "Home", "End"];
+      if (!handledKeys.includes(event.key)) return;
+
+      event.preventDefault();
+      const currentIndex = Math.max(0, items.indexOf(activeItem));
+      let nextIndex = currentIndex;
+
+      if (event.key === "ArrowDown") nextIndex = Math.min(items.length - 1, currentIndex + 1);
+      if (event.key === "ArrowUp") nextIndex = Math.max(0, currentIndex - 1);
+      if (event.key === "Home") nextIndex = 0;
+      if (event.key === "End") nextIndex = items.length - 1;
+      const nextItem = items[nextIndex];
+      setActiveItem(nextItem);
+      centerItem(nextItem);
+    });
+
+    const refreshLayout = () => {
+      resizeFrame = 0;
+      if (scrollFrame) {
+        window.cancelAnimationFrame(scrollFrame);
+        scrollFrame = 0;
+      }
+
+      const targetItem = lyricsInitialized ? activeItem : initialItem;
+      updateTrackPadding();
+      setActiveItem(targetItem);
+      centerItem(targetItem, "auto");
+      lyricsInitialized = true;
+    };
+
+    const requestLayoutRefresh = () => {
+      if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
+      resizeFrame = window.requestAnimationFrame(refreshLayout);
+    };
+
+    const resizeObserver = new ResizeObserver(requestLayoutRefresh);
+    resizeObserver.observe(viewport);
+    items.forEach((item) => resizeObserver.observe(item));
+
+    requestLayoutRefresh();
+    document.fonts?.ready.then(requestLayoutRefresh);
+  });
+</script>
 
 <style>
   :global(body.about-page) {
@@ -180,14 +350,16 @@ const lyricLines = [
     display: grid;
     width: min(100%, 1540px);
     margin: auto;
-    grid-template-columns: minmax(0, 1.52fr) minmax(340px, 0.72fr);
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 0.62fr);
     align-items: center;
-    gap: clamp(48px, 7vw, 120px);
+    gap: clamp(56px, 6vw, 110px);
   }
 
   .swim-cover {
+    width: min(100%, 920px);
     min-width: 0;
     margin: 0;
+    justify-self: start;
     opacity: 0;
     transform: translateY(22px) scale(0.985);
     animation: cover-arrive 900ms 90ms cubic-bezier(0.2, 0.75, 0.2, 1) forwards;
@@ -225,75 +397,116 @@ const lyricLines = [
   }
 
   .swim-cover__caption {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 24px;
     margin-top: 17px;
-    color: rgba(244, 248, 255, 0.58);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .swim-cover__title {
-    color: rgba(255, 255, 255, 0.92);
+    color: rgba(255, 255, 255, 0.86);
     font-size: 13px;
-    letter-spacing: 0.16em;
+    font-weight: 650;
+    letter-spacing: 0.1em;
   }
 
   .swim-lyrics {
+    position: relative;
+    width: 100%;
+    height: clamp(360px, 52svh, 580px);
     min-width: 0;
-    max-width: 570px;
+    max-width: 620px;
     align-self: center;
-  }
-
-  .swim-lyrics__label {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 0 0 clamp(38px, 5.5vh, 68px);
-    color: rgba(236, 243, 255, 0.62);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.19em;
-    text-transform: uppercase;
     opacity: 0;
-    animation: lyric-label-in 700ms 170ms ease-out forwards;
+    transform: translateY(18px);
+    animation: lyrics-arrive 850ms 180ms cubic-bezier(0.2, 0.75, 0.2, 1) forwards;
   }
 
-  .swim-lyrics__label span {
-    width: 32px;
-    height: 1px;
-    background: rgba(236, 243, 255, 0.55);
+  .swim-lyrics__viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding-inline: 6px 18px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: y proximity;
+    scrollbar-width: none;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 15%,
+      #000 85%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 15%,
+      #000 85%,
+      transparent 100%
+    );
   }
 
-  .swim-lyrics__lines {
-    display: grid;
+  .swim-lyrics__viewport::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .swim-lyrics__quote {
     margin: 0;
-    gap: clamp(21px, 3.2vh, 38px);
+  }
+
+  .swim-lyrics__track {
+    --lyrics-padding-start: 40%;
+    --lyrics-padding-end: 40%;
+
+    display: flex;
+    margin: 0;
+    padding:
+      var(--lyrics-padding-start)
+      0
+      var(--lyrics-padding-end);
+    flex-direction: column;
+    gap: clamp(8px, 1.2vh, 16px);
+    list-style: none;
+  }
+
+  .swim-lyrics__item {
+    min-width: 0;
+    scroll-snap-align: center;
   }
 
   .swim-lyrics__line {
-    --line-opacity: 0.48;
-
+    width: 100%;
     margin: 0;
+    padding: clamp(14px, 2.1vh, 24px) 0;
+    border: 0;
+    background: transparent;
     color: #edf3ff;
-    font-size: clamp(2.15rem, 3.2vw, 4.35rem);
+    font: inherit;
+    font-size: clamp(2rem, 2.8vw, 3.8rem);
     font-weight: 750;
     letter-spacing: -0.035em;
     line-height: 1.28;
+    text-align: left;
     text-wrap: balance;
-    opacity: 0;
-    transform: translateY(24px);
-    animation: lyric-line-in 800ms var(--line-delay) cubic-bezier(0.2, 0.75, 0.2, 1) forwards;
+    line-break: strict;
+    overflow-wrap: anywhere;
+    opacity: 0.44;
+    transform: scale(0.975);
+    transform-origin: left center;
+    transition:
+      color 360ms ease,
+      opacity 360ms ease,
+      text-shadow 360ms ease,
+      transform 420ms cubic-bezier(0.2, 0.75, 0.2, 1);
   }
 
-  .swim-lyrics__line--active {
-    --line-opacity: 1;
+  .swim-lyrics__line:hover {
+    opacity: 0.72;
+  }
 
+  .swim-lyrics__item.is-active .swim-lyrics__line {
     color: #ffffff;
+    opacity: 1;
+    transform: scale(1);
     text-shadow: 0 16px 54px rgba(175, 210, 255, 0.26);
   }
 
@@ -327,20 +540,14 @@ const lyricLines = [
     }
   }
 
-  @keyframes lyric-label-in {
+  @keyframes lyrics-arrive {
     to {
       opacity: 1;
-    }
-  }
-
-  @keyframes lyric-line-in {
-    to {
-      opacity: var(--line-opacity);
       transform: translateY(0);
     }
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1100px) {
     .swim-scene {
       overflow: clip;
       padding:
@@ -370,22 +577,16 @@ const lyricLines = [
     .swim-lyrics {
       width: min(100%, 760px);
       margin-inline: auto;
+      justify-self: center;
     }
 
     .swim-lyrics {
+      height: clamp(320px, 48svh, 500px);
       max-width: 680px;
     }
 
-    .swim-lyrics__label {
-      margin-bottom: 30px;
-    }
-
-    .swim-lyrics__lines {
-      gap: clamp(18px, 3vh, 28px);
-    }
-
     .swim-lyrics__line {
-      font-size: clamp(2.2rem, 8.5vw, 4.25rem);
+      font-size: clamp(2rem, 6.8vw, 3.7rem);
     }
   }
 
@@ -403,26 +604,22 @@ const lyricLines = [
 
     .swim-cover__caption {
       margin-top: 12px;
-      font-size: 9px;
-      letter-spacing: 0.1em;
+      font-size: 10px;
+      letter-spacing: 0.08em;
     }
 
-    .swim-cover__title {
-      font-size: 11px;
-    }
-
-    .swim-lyrics__label {
-      margin-bottom: 25px;
-      font-size: 9px;
+    .swim-lyrics {
+      height: clamp(280px, 46svh, 360px);
     }
 
     .swim-lyrics__line {
-      font-size: clamp(2rem, 10.6vw, 3rem);
+      padding-block: 12px;
+      font-size: clamp(1.85rem, 8.4vw, 2.8rem);
       line-height: 1.24;
     }
   }
 
-  @media (max-height: 620px) and (min-width: 901px) {
+  @media (max-height: 620px) and (min-width: 1101px) {
     .swim-scene {
       align-items: start;
       padding-top: calc(var(--header-height) + 22px);
@@ -433,31 +630,32 @@ const lyricLines = [
       gap: clamp(42px, 6vw, 86px);
     }
 
-    .swim-lyrics__label {
-      margin-bottom: 28px;
-    }
-
-    .swim-lyrics__lines {
-      gap: 18px;
+    .swim-lyrics {
+      height: 330px;
     }
 
     .swim-lyrics__line {
-      font-size: clamp(2rem, 3vw, 3.6rem);
+      padding-block: 12px;
+      font-size: clamp(1.9rem, 2.7vw, 3.2rem);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .swim-scene__backdrop-image,
     .swim-cover,
-    .swim-lyrics__label,
-    .swim-lyrics__line {
+    .swim-lyrics {
       animation: none;
       opacity: 1;
       transform: none;
     }
 
-    .swim-lyrics__line:not(.swim-lyrics__line--active) {
-      opacity: var(--line-opacity);
+    .swim-lyrics__viewport {
+      scroll-behavior: auto;
+    }
+
+    .swim-lyrics__line {
+      transform: none;
+      transition: none;
     }
 
     .swim-cover__image {

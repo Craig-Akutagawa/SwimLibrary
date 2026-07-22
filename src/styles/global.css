@@ -159,6 +159,27 @@ svg {
   letter-spacing: 0.08em;
 }
 
+.brand__copy {
+  display: grid;
+  gap: 3px;
+}
+
+.brand__name {
+  line-height: 1.05;
+}
+
+.brand__subtitle {
+  font-family:
+    "Avenir Next", Avenir, "Segoe UI Variable Text", "Segoe UI", "Noto Sans",
+    "Helvetica Neue", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  opacity: 0.58;
+  white-space: nowrap;
+}
+
 .brand__mark {
   display: grid;
   width: 31px;
