@@ -2,6 +2,7 @@
 interface Props {
   name:
     | "arrow-right"
+    | "bilibili"
     | "bookmark"
     | "book-open"
     | "chevron-left"
@@ -20,6 +21,8 @@ const { name, size = 20, strokeWidth = 1.8 } = Astro.props;
 
 const paths: Record<Props["name"], string> = {
   "arrow-right": '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
+  bilibili:
+    '<path d="m8.5 3.5 2.4 2.7M15.5 6.2l2.4-2.7"/><rect x="3" y="6.5" width="18" height="14" rx="3"/><path d="M8.5 11.5v3M15.5 11.5v3"/>',
   bookmark:
     '<path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.6L6 21Z"/>',
   "book-open":
@@ -49,4 +52,3 @@ const paths: Record<Props["name"], string> = {
   stroke-linejoin="round"
   set:html={paths[name]}
 />
-
