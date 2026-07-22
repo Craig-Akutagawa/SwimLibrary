@@ -20,7 +20,7 @@ const chapterCounts = new Map(
     ] as const),
   ),
 );
-const categories = [...new Set(books.map((book) => book.data.category))];
+const categories = ["政治评论", "文学小说", "散文随笔"] as const;
 const visualBooks = [
   featured,
   ...books.filter((book) => book.id !== featured?.id),

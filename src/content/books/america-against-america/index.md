@@ -3,7 +3,7 @@ title: 美国反对美国
 slug: america-against-america
 author: 王沪宁
 summary: 以1988年赴美访学期间的观察为基础，从土地、政治、社会调节、制度再生产与危机潜流等层面，分析美国社会内部相互冲突的力量。
-category: 政治观察
+category: 政治评论
 tags:
   - 美国
   - 政治学

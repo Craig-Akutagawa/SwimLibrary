@@ -3,7 +3,7 @@ title: 政治的人生
 slug: political-life
 author: 王沪宁
 summary: 以1994年全年日记为线索，记录作者在学术研究、行政工作、社会观察与个人思考之间的日常经历，呈现转型时期的政治、文化与人生感悟。
-category: 政治随笔
+category: 散文随笔
 tags:
   - 政治学
   - 日记
