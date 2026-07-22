@@ -16,7 +16,7 @@ const books = defineCollection({
     slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     author: z.string().min(1),
     summary: z.string().min(1),
-    category: z.string().min(1),
+    category: z.enum(["政治评论", "文学小说", "散文随笔"]),
     tags: z.array(z.string().min(1)).min(1),
     published: z.coerce.date(),
     updated: z.coerce.date(),
