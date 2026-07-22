@@ -26,20 +26,29 @@ const pageTitle = title ? `${title} · ${siteConfig.name}` : siteConfig.name;
 const canonical = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).toString()
   : undefined;
+const bodyClasses = bodyClass.split(/\s+/);
+const isAboutPage = bodyClasses.includes("about-page");
+const isReaderPage = bodyClasses.includes("reader-body");
+const lightThemeColor = isAboutPage
+  ? "#030817"
+  : isReaderPage
+    ? "#fbf8f0"
+    : "#eaf1f5";
+const darkThemeColor = isReaderPage ? "#050b16" : "#030817";
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class:list={{ "fixed-dark-page": isAboutPage }}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#f5f0e5" />
+    <meta name="theme-color" content={lightThemeColor} />
     {canonical && <link rel="canonical" href={canonical} />}
     <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
     <title>{pageTitle}</title>
-    <script is:inline>
+    <script is:inline define:vars={{ lightThemeColor, darkThemeColor }}>
       (() => {
         try {
           const saved = localStorage.getItem("shiyue-theme");
@@ -48,7 +57,10 @@ const canonical = Astro.site
           document.documentElement.dataset.theme = theme;
           document
             .querySelector('meta[name="theme-color"]')
-            ?.setAttribute("content", theme === "dark" ? "#1d1c1a" : "#f5f0e5");
+            ?.setAttribute(
+              "content",
+              theme === "dark" ? darkThemeColor : lightThemeColor,
+            );
         } catch {
           document.documentElement.dataset.theme = "light";
         }
@@ -61,13 +73,16 @@ const canonical = Astro.site
     <slot />
     {!hideChrome && !hideFooter && <Footer />}
 
-    <script is:inline>
+    <script is:inline define:vars={{ lightThemeColor, darkThemeColor }}>
       (() => {
         const setTheme = (theme) => {
           document.documentElement.dataset.theme = theme;
           document
             .querySelector('meta[name="theme-color"]')
-            ?.setAttribute("content", theme === "dark" ? "#1d1c1a" : "#f5f0e5");
+            ?.setAttribute(
+              "content",
+              theme === "dark" ? darkThemeColor : lightThemeColor,
+            );
           try {
             localStorage.setItem("shiyue-theme", theme);
           } catch {}
