@@ -169,14 +169,13 @@ svg {
 }
 
 .brand__subtitle {
-  font-family:
-    "Avenir Next", Avenir, "Segoe UI Variable Text", "Segoe UI", "Noto Sans",
-    "Helvetica Neue", sans-serif;
+  font-family: var(--font-serif);
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-weight: 500;
+  letter-spacing: 0.13em;
   line-height: 1;
-  opacity: 0.58;
+  font-kerning: normal;
+  opacity: 0.64;
   white-space: nowrap;
 }
 
