@@ -387,10 +387,6 @@ svg {
   content: "";
 }
 
-.hero .eyebrow {
-  color: rgba(224, 235, 255, 0.65);
-}
-
 .hero__brand {
   margin: 0;
   font-family: var(--font-serif);
@@ -409,14 +405,6 @@ svg {
   font-size: clamp(22px, 2vw, 30px);
   letter-spacing: 0.02em;
   line-height: 1.55;
-}
-
-.hero__meta {
-  max-width: 470px;
-  margin: 20px 0 0;
-  color: rgba(211, 224, 246, 0.62);
-  font-size: 14px;
-  line-height: 1.8;
 }
 
 .hero__actions {
@@ -747,14 +735,6 @@ svg {
   font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1.15;
-}
-
-.section-heading__copy {
-  max-width: 460px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.8;
 }
 
 .continue-reading {
@@ -1978,10 +1958,6 @@ svg {
     font-size: 22px;
   }
 
-  .hero__meta {
-    max-width: 30em;
-  }
-
   .hero__visual {
     position: absolute;
     right: -52px;
@@ -2011,10 +1987,6 @@ svg {
   .section-heading {
     display: block;
     margin-bottom: 30px;
-  }
-
-  .section-heading__copy {
-    margin-top: 14px;
   }
 
   .continue-reading {
