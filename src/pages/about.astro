@@ -56,6 +56,12 @@ const initialLyricId = `swim-lyric-${initialLyricIndex + 1}`;
               quality={86}
               priority
             />
+          </div>
+          <figcaption class="swim-cover__meta">
+            <span class="swim-cover__caption">
+              <span class="swim-cover__title">SWIM</span>
+              <span class="swim-cover__version">(MyGO!!!!! ver)</span>
+            </span>
             <a
               class="swim-cover__play"
               href="https://www.bilibili.com/video/BV1CN4y1u7Ub/"
@@ -66,13 +72,6 @@ const initialLyricId = `swim-lyric-${initialLyricIndex + 1}`;
                 <Icon name="bilibili" size={22} strokeWidth={1.7} />
               </span>
             </a>
-          </div>
-          <figcaption
-            class="swim-cover__caption"
-            aria-label="SWIM(MyGO!!!!! ver)"
-          >
-            <span class="swim-cover__title">SWIM</span>
-            <span class="swim-cover__version">(MyGO!!!!! ver)</span>
           </figcaption>
         </figure>
 
@@ -413,10 +412,20 @@ const initialLyricId = `swim-lyric-${initialLyricIndex + 1}`;
     transform: scale(1.012);
   }
 
+  .swim-cover__meta {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin-top: 15px;
+    padding-inline: 3px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: clamp(16px, 2vw, 28px);
+  }
+
   .swim-cover__play {
-    position: absolute;
-    right: clamp(14px, 1.3vw, 20px);
-    bottom: clamp(14px, 1.3vw, 20px);
+    position: relative;
     z-index: 2;
     display: flex;
     width: 50px;
@@ -425,7 +434,9 @@ const initialLyricId = `swim-lyric-${initialLyricIndex + 1}`;
     padding-inline: 13px;
     overflow: hidden;
     align-items: center;
+    align-self: center;
     justify-content: flex-end;
+    justify-self: end;
     border: 1px solid rgba(255, 255, 255, 0.26);
     border-radius: 999px;
     background: rgba(3, 8, 23, 0.76);
@@ -446,14 +457,17 @@ const initialLyricId = `swim-lyric-${initialLyricIndex + 1}`;
   }
 
   .swim-cover__play-label {
+    display: inline-flex;
     max-width: 0;
     margin-right: 0;
+    padding-block: 2px;
     overflow: hidden;
+    align-items: center;
     font-family: var(--font-serif);
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.055em;
-    line-height: 1;
+    line-height: 1.35;
     opacity: 0;
     transform: translateX(7px);
     white-space: nowrap;
@@ -512,7 +526,6 @@ const initialLyricId = `swim-lyric-${initialLyricIndex + 1}`;
   .swim-cover__caption {
     display: grid;
     width: max-content;
-    margin: 15px 0 0 3px;
     padding-left: 12px;
     border-left: 1px solid rgba(131, 184, 255, 0.7);
     color: rgba(255, 255, 255, 0.92);
@@ -733,9 +746,12 @@ const initialLyricId = `swim-lyric-${initialLyricIndex + 1}`;
       border-radius: 12px;
     }
 
+    .swim-cover__meta {
+      margin-top: 12px;
+      padding-inline: 0;
+    }
+
     .swim-cover__play {
-      right: 10px;
-      bottom: 10px;
       width: 44px;
       height: 44px;
       padding-inline: 11px;
@@ -747,7 +763,6 @@ const initialLyricId = `swim-lyric-${initialLyricIndex + 1}`;
     }
 
     .swim-cover__caption {
-      margin-top: 12px;
       padding-left: 10px;
     }
 
