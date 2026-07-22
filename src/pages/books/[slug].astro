@@ -43,7 +43,11 @@ const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
 ---
 
 <BaseLayout title={book.data.title} description={book.data.summary}>
-  <main id="main-content">
+  <main
+    id="main-content"
+    class="book-page"
+    style={{ "--book-accent": book.data.accent }}
+  >
     <div class="shell book-detail">
       <div class="book-detail__cover reveal">
         <BookCover

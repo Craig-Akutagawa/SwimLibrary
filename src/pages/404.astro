@@ -4,10 +4,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { withBase } from "../lib/paths";
 ---
 
-<BaseLayout title="没有找到这一页">
-  <main id="main-content">
-    <section class="page-header">
+<BaseLayout title="没有找到这一页" overlayHeader bodyClass="not-found-body">
+  <main id="main-content" class="not-found-page">
+    <section class="page-header not-found-page__hero">
       <div class="shell">
+        <p class="not-found-page__code" aria-hidden="true">404</p>
         <p class="eyebrow">404 · Missing page</p>
         <h1>这一页，暂时不在书架上。</h1>
         <p>链接可能已经移动，或者章节仍在整理。你可以返回馆藏，从另一册书开始。</p>
